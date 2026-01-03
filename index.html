@@ -1,88 +1,412 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Order Manager</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <title>Order Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #222;
+      --tab-active: #000;
+      --accent: #2b9cff;
+      --card: #f7f7f7;
+    }
 
-<style>
-body { font-family: Arial; margin: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      background: #fafafa;
+      color: #111;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-.tabs {
-display: flex;
-background: #222;
-}
+    .tabs {
+      display: flex;
+      background: var(--bg);
+    }
 
-.tab {
-flex: 1;
-padding: 12px;
-text-align: center;
-color: white;
-cursor: pointer;
-}
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      color: white;
+      cursor: pointer;
+      user-select: none;
+    }
 
-.tab.active {
-background: #000;
-font-weight: bold;
-}
+    .tab.active {
+      background: var(--tab-active);
+      font-weight: bold;
+    }
 
-.content {
-display: none;
-padding: 20px;
-}
+    main {
+      padding: 16px;
+      flex: 1;
+    }
 
-.content.active {
-display: block;
-}
+    .content {
+      display: none;
+      padding: 12px 0;
+    }
 
-input, select, button {
-width: 100%;
-padding: 10px;
-margin: 6px 0;
-}
-</style>
+    .content.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 6px;
+      padding: 16px;
+      max-width: 720px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-top: 10px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .orders-list {
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #e6e6e6;
+    }
+
+    th {
+      background: #fafafa;
+      font-weight: 600;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .summary-item {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .muted {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 12px; }
+    }
+  </style>
 </head>
 <body>
 
 <!-- Tabs -->
-<div class="tabs">
-<div class="tab active" onclick="openTab('new')">New Order</div>
-<div class="tab" onclick="openTab('list')">Orders</div>
-<div class="tab" onclick="openTab('summary')">Summary</div>
+<div class="tabs" role="tablist" aria-label="Order manager tabs">
+  <div class="tab active" role="tab" aria-selected="true" tabindex="0" onclick="openTab('new', this)">New Order</div>
+  <div class="tab" role="tab" aria-selected="false" tabindex="0" onclick="openTab('list', this)">Orders</div>
+  <div class="tab" role="tab" aria-selected="false" tabindex="0" onclick="openTab('summary', this)">Summary</div>
 </div>
 
-<!-- Tab Content -->
-<div id="new" class="content active">
-<h3>New Order</h3>
-<input placeholder="Customer Name">
-<input placeholder="Product">
-<input type="number" placeholder="Quantity">
-<input type="number" placeholder="Price">
-<select>
-<option>Paid</option>
-<option>Pending</option>
-</select>
-<button>Save Order</button>
-</div>
+<main>
+  <!-- New Order -->
+  <section id="new" class="content active" role="tabpanel">
+    <div class="card">
+      <h3>New Order</h3>
+      <form id="orderForm" onsubmit="return false;">
+        <label for="customer">Customer Name</label>
+        <input id="customer" name="customer" type="text" placeholder="Customer Name" required>
 
-<div id="list" class="content">
-<h3>Orders List</h3>
-<p>(Orders will appear here)</p>
-</div>
+        <label for="product">Product</label>
+        <input id="product" name="product" type="text" placeholder="Product" required>
 
-<div id="summary" class="content">
-<h3>Summary</h3>
-<p>Total orders, paid vs pending</p>
-</div>
+        <label for="quantity">Quantity</label>
+        <input id="quantity" name="quantity" type="number" placeholder="Quantity" min="1" step="1" value="1" required>
+
+        <label for="price">Price (per item)</label>
+        <input id="price" name="price" type="number" placeholder="Price" min="0" step="0.01" value="0.00" required>
+
+        <label for="status">Payment Status</label>
+        <select id="status" name="status" required>
+          <option value="Paid">Paid</option>
+          <option value="Pending">Pending</option>
+        </select>
+
+        <div style="margin-top:12px">
+          <button id="saveBtn" type="button">Save Order</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Orders List -->
+  <section id="list" class="content" role="tabpanel" aria-hidden="true">
+    <div class="card">
+      <h3>Orders List</h3>
+      <div class="orders-list" id="ordersContainer">
+        <p class="muted" id="noOrdersMsg">(No orders yet)</p>
+        <div id="ordersTableWrap" style="display:none;">
+          <table id="ordersTable" aria-live="polite">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Summary -->
+  <section id="summary" class="content" role="tabpanel" aria-hidden="true">
+    <div class="card">
+      <h3>Summary</h3>
+      <div class="summary-grid" id="summaryGrid">
+        <div class="summary-item">
+          <div class="muted">Total orders</div>
+          <div id="totalOrders">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="muted">Paid orders</div>
+          <div id="paidOrders">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="muted">Pending orders</div>
+          <div id="pendingOrders">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="muted">Total revenue (paid)</div>
+          <div id="totalRevenue">$0.00</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
 
 <script>
-function openTab(tabId) {
-document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  // Tab switching: receive clicked tab element to set active class reliably
+  function openTab(tabId, tabElement) {
+    // Hide all contents and remove active from tabs
+    document.querySelectorAll('.content').forEach(c => {
+      c.classList.remove('active');
+      c.setAttribute('aria-hidden', 'true');
+    });
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
 
-document.getElementById(tabId).classList.add('active');
-event.target.classList.add('active');
-}
+    // Show chosen content and mark tab active
+    const contentEl = document.getElementById(tabId);
+    if (contentEl) {
+      contentEl.classList.add('active');
+      contentEl.setAttribute('aria-hidden', 'false');
+    }
+
+    if (tabElement) {
+      tabElement.classList.add('active');
+      tabElement.setAttribute('aria-selected', 'true');
+      tabElement.focus();
+    }
+  }
+
+  // Orders stored in localStorage under this key
+  const STORAGE_KEY = 'orders_v1';
+
+  function loadOrders() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      return JSON.parse(raw);
+    } catch (e) {
+      console.error('Failed to parse orders from storage', e);
+      return [];
+    }
+  }
+
+  function saveOrders(orders) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+  }
+
+  function formatCurrency(n) {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n);
+  }
+
+  function renderOrders() {
+    const orders = loadOrders();
+    const noOrdersMsg = document.getElementById('noOrdersMsg');
+    const ordersTableWrap = document.getElementById('ordersTableWrap');
+    const tbody = document.getElementById('ordersBody');
+
+    tbody.innerHTML = '';
+
+    if (!orders.length) {
+      noOrdersMsg.style.display = 'block';
+      ordersTableWrap.style.display = 'none';
+      return;
+    }
+
+    noOrdersMsg.style.display = 'none';
+    ordersTableWrap.style.display = 'block';
+
+    orders.forEach((o, idx) => {
+      const tr = document.createElement('tr');
+
+      const total = Number(o.quantity) * Number(o.price);
+
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${escapeHtml(o.customer)}</td>
+        <td>${escapeHtml(o.product)}</td>
+        <td>${o.quantity}</td>
+        <td>${formatCurrency(Number(o.price))}</td>
+        <td>${formatCurrency(total)}</td>
+        <td>${escapeHtml(o.status)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderSummary() {
+    const orders = loadOrders();
+    const totalOrders = orders.length;
+    const paidOrders = orders.filter(o => o.status === 'Paid').length;
+    const pendingOrders = orders.filter(o => o.status === 'Pending').length;
+    const totalRevenue = orders
+      .filter(o => o.status === 'Paid')
+      .reduce((sum, o) => sum + Number(o.price) * Number(o.quantity), 0);
+
+    document.getElementById('totalOrders').textContent = totalOrders;
+    document.getElementById('paidOrders').textContent = paidOrders;
+    document.getElementById('pendingOrders').textContent = pendingOrders;
+    document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+  }
+
+  function escapeHtml(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/[&<>"']/g, function (m) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+    });
+  }
+
+  function clearForm() {
+    document.getElementById('customer').value = '';
+    document.getElementById('product').value = '';
+    document.getElementById('quantity').value = 1;
+    document.getElementById('price').value = '0.00';
+    document.getElementById('status').value = 'Paid';
+  }
+
+  function onSaveOrder() {
+    const customer = document.getElementById('customer').value.trim();
+    const product = document.getElementById('product').value.trim();
+    const quantity = Number(document.getElementById('quantity').value);
+    const price = Number(document.getElementById('price').value);
+    const status = document.getElementById('status').value;
+
+    if (!customer || !product) {
+      alert('Please enter customer and product.');
+      return;
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      alert('Please enter a valid quantity (>= 1).');
+      return;
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      alert('Please enter a valid price (>= 0).');
+      return;
+    }
+
+    const orders = loadOrders();
+    orders.push({
+      customer,
+      product,
+      quantity,
+      price,
+      status,
+      createdAt: new Date().toISOString()
+    });
+    saveOrders(orders);
+
+    renderOrders();
+    renderSummary();
+    clearForm();
+
+    // switch to Orders tab to show the new order
+    const listTab = Array.from(document.querySelectorAll('.tab')).find(t => t.textContent.trim() === 'Orders');
+    openTab('list', listTab);
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', onSaveOrder);
+
+  // Initialize on load
+  window.addEventListener('DOMContentLoaded', () => {
+    renderOrders();
+    renderSummary();
+
+    // allow keyboard activation of tabs
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          // find index to know which panel to open
+          const text = t.textContent.trim();
+          if (text === 'New Order') openTab('new', t);
+          if (text === 'Orders') openTab('list', t);
+          if (text === 'Summary') openTab('summary', t);
+        }
+      });
+    });
+  });
 </script>
-
 </body>
 </html>
+```
