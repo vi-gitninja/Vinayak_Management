@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Order Manager</title>
+  <title>VINAYAK INDUSTRIES - Order Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -20,6 +20,29 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+
+    /* Header with logo and title */
+    .site-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg);
+      color: white;
+    }
+    .site-header .logo {
+      height: 40px;
+      width: auto;
+      display: block;
+      border-radius: 4px;
+    }
+    .site-header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      text-transform: uppercase; /* ensure capitals */
+      letter-spacing: 0.6px;
+      font-weight: 700;
     }
 
     .tabs {
@@ -136,10 +159,19 @@
 
     @media (max-width: 480px) {
       .card { padding: 12px; }
+      .site-header h1 { font-size: 0.95rem; }
+      .site-header .logo { height: 34px; }
     }
   </style>
 </head>
 <body>
+
+<!-- Site header: logo + title -->
+<header class="site-header" role="banner">
+  <!-- logo file placed in repo root: 211984475222.png -->
+  <img src="211984475222.png" alt="Vinayak Industries logo" class="logo" />
+  <h1>VINAYAK INDUSTRIES</h1>
+</header>
 
 <!-- Tabs -->
 <div class="tabs" role="tablist" aria-label="Order manager tabs">
@@ -409,4 +441,3 @@
 </script>
 </body>
 </html>
-```
